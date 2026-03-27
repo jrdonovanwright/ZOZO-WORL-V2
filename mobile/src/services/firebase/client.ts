@@ -1,12 +1,12 @@
 /**
  * Firebase app + Auth singleton.
  *
- * Called once at app startup. All other Firebase service files import
- * `firebaseAuth` from here — never call initializeApp elsewhere.
+ * All other Firebase service files import `firebaseAuth` from here —
+ * never call initializeApp or initializeAuth elsewhere.
  */
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getApps, initializeApp } from "firebase/app";
-import { Auth, getAuth, initializeAuth, getReactNativePersistence } from "firebase/auth";
+import { getApp, getApps, initializeApp } from "firebase/app";
+import { Auth, getAuth, getReactNativePersistence, initializeAuth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -17,14 +17,19 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// initializeAuth can only be called once per app — use getAuth on subsequent imports
-export const firebaseAuth: Auth =
-  getApps().length > 1
-    ? getAuth(app)
-    : initializeAuth(app, {
-        persistence: getReactNativePersistence(AsyncStorage),
-      });
+// initializeAuth must be called exactly once per app with React Native persistence.
+// On hot reload the module re-evaluates and initializeAuth throws — catch it and
+// fall back to getAuth(), which returns the already-initialized instance.
+let firebaseAuth: Auth;
+try {
+  firebaseAuth = initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage),
+  });
+} catch {
+  firebaseAuth = getAuth(app);
+}
 
+export { firebaseAuth };
 export default app;
