@@ -32,7 +32,7 @@ from app.services.tts import elevenlabs_service as tts
 
 logger = logging.getLogger(__name__)
 
-_GPT_MODEL = "gpt-4o"
+_GPT_MODEL = "gpt-4o-2024-11-20"
 
 # Keep responses short — Zoey speaks in bursts, not paragraphs.
 # Children's attention spans are short; brevity IS warmth here.
