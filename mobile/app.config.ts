@@ -42,6 +42,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
           "Zoey listens to your voice so you can talk to her!",
       },
     ],
+    "expo-secure-store",
   ],
   extra: {
     apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL,

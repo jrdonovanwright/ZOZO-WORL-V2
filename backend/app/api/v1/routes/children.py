@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import Response
 
 from app.core.auth import VerifiedUser, get_current_user
 from app.models.user import ChildProfile, CreateChildRequest, UpdateChildRequest
@@ -89,12 +90,14 @@ async def update_child(
 @router.delete(
     "/{child_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
     summary="Delete a child profile",
 )
 async def delete_child(
     child_id: str,
     user: VerifiedUser = Depends(get_current_user),
-) -> None:
+) -> Response:
     deleted = await db.delete_child(child_id=child_id, parent_id=user.uid)
     if not deleted:
         raise _not_found(child_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

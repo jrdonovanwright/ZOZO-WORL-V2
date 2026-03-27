@@ -6,6 +6,7 @@
 
 # Firebase
 *-service-account.json
+*-adminsdk*.json
 firebase-debug.log
 .firebaserc
 
