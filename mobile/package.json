@@ -11,6 +11,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@firebase/app": "^0.10.13",
+    "@firebase/auth": "^1.7.9",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@stripe/stripe-react-native": "0.50.3",
     "axios": "^1.7.7",
@@ -42,10 +44,10 @@
     "@types/react": "~18.2.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
+    "babel-plugin-module-resolver": "^5.0.2",
     "eslint": "^8.57.0",
     "jest": "^29.7.0",
     "jest-expo": "~51.0.0",
-    "typescript": "~5.3.0",
-    "babel-plugin-module-resolver": "^5.0.2"
+    "typescript": "~5.3.0"
   }
 }

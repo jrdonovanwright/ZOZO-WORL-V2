@@ -1,28 +1,14 @@
-/**
- * Root layout — auth gate.
- *
- * Responsibilities:
- *  1. Import firebase/auth.ts once to activate the Axios token interceptor.
- *  2. Subscribe to Firebase auth state changes.
- *  3. On sign-in: fetch parent profile + children from the backend.
- *  4. Route the user to the correct screen group based on auth + data state.
- *
- * Routing rules:
- *  • No user           → /(auth)/sign-in
- *  • User, no children → /(onboarding)/add-child
- *  • User, has children → /(child)/   (home)
- */
-import "@/services/firebase/auth"; // activate Axios token interceptor
-
 import { useEffect } from "react";
 import { Slot, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 
-import { onAuthChange } from "@/services/firebase/auth";
-import { getMe } from "@/services/api/auth";
-import { getChildren } from "@/services/api/children";
 import { useAuthStore } from "@/store/authStore";
 import { useChildStore } from "@/store/childStore";
+
+// ⚠️  DEV ONLY — set to false to re-enable auth before shipping.
+// When true, all Firebase auth imports are skipped entirely so no auth
+// module-level code runs and the app goes straight to the child home screen.
+const SKIP_AUTH_FOR_DEV = true;
 
 SplashScreen.preventAutoHideAsync();
 
@@ -34,22 +20,38 @@ export default function RootLayout() {
   const { children, setChildren, clear: clearChildren } = useChildStore();
 
   // -------------------------------------------------------------------------
-  // Firebase auth listener — runs once on mount
+  // Dev bypass — skip Firebase entirely, go straight to child home screen
   // -------------------------------------------------------------------------
   useEffect(() => {
+    if (!SKIP_AUTH_FOR_DEV) return;
+    SplashScreen.hideAsync();
+    if (segments[0] !== "(child)") router.replace("/(child)/");
+  }, [segments]);
+
+  // -------------------------------------------------------------------------
+  // Firebase auth listener — only runs when auth is enabled
+  // -------------------------------------------------------------------------
+  useEffect(() => {
+    if (SKIP_AUTH_FOR_DEV) return;
+
+    // Dynamically import auth so none of its module-level code runs in dev bypass mode
+    const { initAuthInterceptor, onAuthChange } =
+      require("@/services/firebase/auth") as typeof import("@/services/firebase/auth");
+    const { getMe } = require("@/services/api/auth") as typeof import("@/services/api/auth");
+    const { getChildren } = require("@/services/api/children") as typeof import("@/services/api/children");
+
+    initAuthInterceptor();
+
     const unsubscribe = onAuthChange(async (firebaseUser) => {
       setLoading(true);
 
       if (firebaseUser) {
         setUser(firebaseUser);
         try {
-          // Fetch parent profile + children concurrently
           const [parent, kids] = await Promise.all([getMe(), getChildren()]);
           setParent(parent);
           setChildren(kids);
         } catch (err) {
-          // Profile fetch failed — still authenticated, but treat as no children
-          // so onboarding can complete and retry
           console.warn("Failed to load profile data:", err);
           setChildren([]);
         }
@@ -66,22 +68,20 @@ export default function RootLayout() {
   }, []);
 
   // -------------------------------------------------------------------------
-  // Routing guard — runs whenever auth or children state changes
+  // Routing guard — only runs when auth is enabled
   // -------------------------------------------------------------------------
   useEffect(() => {
+    if (SKIP_AUTH_FOR_DEV) return;
     if (isLoading) return;
 
     const group = segments[0] as string | undefined;
-    const inAuth = group === "(auth)";
-    const inOnboarding = group === "(onboarding)";
-    const inChild = group === "(child)";
 
     if (!user) {
-      if (!inAuth) router.replace("/(auth)/sign-in");
+      if (group !== "(auth)") router.replace("/(auth)/sign-in");
     } else if (children.length === 0) {
-      if (!inOnboarding) router.replace("/(onboarding)/add-child");
+      if (group !== "(onboarding)") router.replace("/(onboarding)/add-child");
     } else {
-      if (!inChild) router.replace("/(child)/");
+      if (group !== "(child)") router.replace("/(child)/");
     }
   }, [user, isLoading, children, segments]);
 

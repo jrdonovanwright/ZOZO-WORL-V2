@@ -1,12 +1,5 @@
-/**
- * Firebase app + Auth singleton.
- *
- * All other Firebase service files import `firebaseAuth` from here —
- * never call initializeApp or initializeAuth elsewhere.
- */
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getApp, getApps, initializeApp } from "firebase/app";
-import { Auth, getAuth, getReactNativePersistence, initializeAuth } from "firebase/auth";
+import type { Auth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -19,17 +12,20 @@ const firebaseConfig = {
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// initializeAuth must be called exactly once per app with React Native persistence.
-// On hot reload the module re-evaluates and initializeAuth throws — catch it and
-// fall back to getAuth(), which returns the already-initialized instance.
-let firebaseAuth: Auth;
-try {
-  firebaseAuth = initializeAuth(app, {
-    persistence: getReactNativePersistence(AsyncStorage),
-  });
-} catch {
-  firebaseAuth = getAuth(app);
+// auth is null until getFirebaseAuth() is first called.
+// Nothing in this file calls getAuth at module level — that's what caused
+// "Component auth has not been registered yet" on every earlier attempt.
+let _auth: Auth | null = null;
+
+export function getFirebaseAuth(): Auth {
+  if (!_auth) {
+    // require() defers firebase/auth loading until this function is called,
+    // guaranteeing firebase/app is fully settled first.
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { getAuth } = require("firebase/auth") as typeof import("firebase/auth");
+    _auth = getAuth(app);
+  }
+  return _auth;
 }
 
-export { firebaseAuth };
 export default app;
