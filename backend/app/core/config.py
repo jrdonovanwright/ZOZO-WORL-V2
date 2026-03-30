@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     stripe_webhook_secret: str = ""
 
     firebase_service_account: str = ""
+    firebase_storage_bucket: str = ""
 
     google_calendar_client_id: str = ""
     google_calendar_client_secret: str = ""

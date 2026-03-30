@@ -6,8 +6,9 @@ are async — they delegate blocking I/O to a thread pool via asyncio.to_thread
 so they don't block FastAPI's event loop.
 
 Collections:
-  users/{uid}          — parent profiles
-  children/{child_id}  — child profiles (child_id is a Firestore auto-ID)
+  users/{uid}                              — parent profiles
+  users/{uid}/parentReports/{session_id}   — per-session parent intelligence reports
+  children/{child_id}                      — child profiles (child_id is a Firestore auto-ID)
 """
 from __future__ import annotations
 
@@ -210,3 +211,114 @@ async def delete_child(child_id: str, parent_id: str) -> bool:
     Returns False if the child does not exist or does not belong to parent_id.
     """
     return await asyncio.to_thread(_sync_delete_child, child_id, parent_id)
+
+
+# ---------------------------------------------------------------------------
+# Parent intelligence reports
+# ---------------------------------------------------------------------------
+
+def _sync_save_parent_report(uid: str, session_id: str, data: dict) -> None:
+    db = _db()
+    db.collection(_USERS).document(uid).collection("parentReports").document(session_id).set(data)
+    logger.info("Saved parent report uid=%s session=%s", uid, session_id)
+
+
+async def save_parent_report(uid: str, session_id: str, data: dict) -> None:
+    """Write a report document to users/{uid}/parentReports/{session_id}."""
+    await asyncio.to_thread(_sync_save_parent_report, uid, session_id, data)
+
+
+def _sync_list_parent_reports(uid: str, limit: int) -> list[dict]:
+    db = _db()
+    docs = (
+        db.collection(_USERS)
+        .document(uid)
+        .collection("parentReports")
+        .order_by("created_at", direction=firestore.Query.DESCENDING)
+        .limit(limit)
+        .stream()
+    )
+    return [doc.to_dict() for doc in docs]
+
+
+async def list_parent_reports(uid: str, limit: int = 20) -> list[dict]:
+    """Return up to `limit` reports for a parent, newest first."""
+    return await asyncio.to_thread(_sync_list_parent_reports, uid, limit)
+
+
+# ---------------------------------------------------------------------------
+# Streaks — children/{child_id}/streaks/current
+# ---------------------------------------------------------------------------
+
+def _sync_get_streak(child_id: str) -> dict | None:
+    db = _db()
+    doc = db.collection(_CHILDREN).document(child_id).collection("streaks").document("current").get()
+    return doc.to_dict() if doc.exists else None
+
+
+async def get_streak(child_id: str) -> dict | None:
+    """Read the current streak document for a child."""
+    return await asyncio.to_thread(_sync_get_streak, child_id)
+
+
+def _sync_set_streak(child_id: str, data: dict) -> None:
+    db = _db()
+    db.collection(_CHILDREN).document(child_id).collection("streaks").document("current").set(data)
+
+
+async def set_streak(child_id: str, data: dict) -> None:
+    """Write (overwrite) the streak document for a child."""
+    await asyncio.to_thread(_sync_set_streak, child_id, data)
+
+
+# ---------------------------------------------------------------------------
+# Weekly challenges — children/{child_id}/weeklyChallenges/{week_id}
+# ---------------------------------------------------------------------------
+
+def _sync_get_challenge(child_id: str, week_id: str) -> dict | None:
+    db = _db()
+    doc = (
+        db.collection(_CHILDREN)
+        .document(child_id)
+        .collection("weeklyChallenges")
+        .document(week_id)
+        .get()
+    )
+    return doc.to_dict() if doc.exists else None
+
+
+async def get_challenge(child_id: str, week_id: str) -> dict | None:
+    """Read a weekly challenge document."""
+    return await asyncio.to_thread(_sync_get_challenge, child_id, week_id)
+
+
+def _sync_set_challenge(child_id: str, week_id: str, data: dict) -> None:
+    db = _db()
+    (
+        db.collection(_CHILDREN)
+        .document(child_id)
+        .collection("weeklyChallenges")
+        .document(week_id)
+        .set(data)
+    )
+
+
+async def set_challenge(child_id: str, week_id: str, data: dict) -> None:
+    """Write a weekly challenge document."""
+    await asyncio.to_thread(_sync_set_challenge, child_id, week_id, data)
+
+
+def _sync_update_challenge(child_id: str, week_id: str, updates: dict) -> None:
+    db = _db()
+    (
+        db.collection(_CHILDREN)
+        .document(child_id)
+        .collection("weeklyChallenges")
+        .document(week_id)
+        .update(updates)
+    )
+
+
+async def update_challenge(child_id: str, week_id: str, updates: dict) -> None:
+    """Partial update on a weekly challenge document."""
+    await asyncio.to_thread(_sync_update_challenge, child_id, week_id, updates)
