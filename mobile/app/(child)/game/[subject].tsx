@@ -30,6 +30,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ZoeyAvatar } from "@/components/zoey/ZoeyAvatar";
 import { ZoeyLoading } from "@/components/ui/ZoeyLoading";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { ChoiceButton, type ChoiceState } from "@/components/game/ChoiceButton";
 import { FeedbackOverlay } from "@/components/game/FeedbackOverlay";
 import { SessionProgress } from "@/components/game/SessionProgress";
@@ -51,11 +52,24 @@ function zoeyMoodForStatus(status: string) {
   }
 }
 
-export default function GameScreen() {
+export default function GameScreenWrapper() {
+  console.log("[GameScreen] Wrapper rendering");
+  return (
+    <ErrorBoundary>
+      <GameScreen />
+    </ErrorBoundary>
+  );
+}
+
+function GameScreen() {
+  console.log("[GameScreen] Component rendering");
   const router = useRouter();
-  const { subject } = useLocalSearchParams<{ subject: string }>();
+  const params = useLocalSearchParams<{ subject: string }>();
+  const subject = params.subject;
+  console.log("[GameScreen] subject param:", subject);
   const subjectId = (subject ?? "math") as SubjectId;
   const subjectMeta = SUBJECTS[subjectId];
+  console.log("[GameScreen] subjectMeta:", subjectMeta?.label ?? "MISSING");
 
   const activeChild = useChildStore((s) => s.activeChild);
   const childId   = activeChild?.id   ?? "dev-child";

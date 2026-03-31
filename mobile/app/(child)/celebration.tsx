@@ -35,6 +35,7 @@ import * as Haptics from "expo-haptics";
 
 import { ZoeyCharacter } from "@/components/zoey/ZoeyCharacter";
 import { ParticleSystem } from "@/components/effects/ParticleSystem";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { palette, colors } from "@/design/tokens";
 import { shadows } from "@/design/shadows";
 import { spring, duration, stagger } from "@/design/animations";
@@ -88,7 +89,17 @@ function StaggeredWord({ word, index }: { word: string; index: number }) {
 
 // ─── Main screen ────────────────────────────────────────────────────────────
 
-export default function CelebrationScreen() {
+export default function CelebrationScreenWrapper() {
+  console.log("[CelebrationScreen] Wrapper rendering");
+  return (
+    <ErrorBoundary>
+      <CelebrationScreen />
+    </ErrorBoundary>
+  );
+}
+
+function CelebrationScreen() {
+  console.log("[CelebrationScreen] Component rendering");
   const router = useRouter();
   const { width, height } = useWindowDimensions();
   const reduceMotion = useReduceMotion();

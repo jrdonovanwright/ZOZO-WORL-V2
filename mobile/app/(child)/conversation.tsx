@@ -33,6 +33,7 @@ import Animated, {
 
 import { useChildStore } from "@/store/childStore";
 import { ZoeyAvatar } from "@/components/zoey/ZoeyAvatar";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { useConversation } from "@/hooks/useConversation";
 import { colors, MIN_TAP_TARGET, radius, spacing, typography } from "@/theme";
@@ -64,7 +65,17 @@ function statusToMood(status: string): "happy" | "excited" | "thinking" | "proud
   }
 }
 
-export default function ConversationScreen() {
+export default function ConversationScreenWrapper() {
+  console.log("[ConversationScreen] Wrapper rendering");
+  return (
+    <ErrorBoundary>
+      <ConversationScreen />
+    </ErrorBoundary>
+  );
+}
+
+function ConversationScreen() {
+  console.log("[ConversationScreen] Component rendering");
   const router = useRouter();
   const params = useLocalSearchParams<{ subject: string }>();
   const subjectId = (params.subject ?? "free_talk") as SubjectId;

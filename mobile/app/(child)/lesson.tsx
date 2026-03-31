@@ -35,6 +35,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { ZoeyAvatar } from "@/components/zoey/ZoeyAvatar";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { useLesson } from "@/hooks/useLesson";
 import { useChildStore } from "@/store/childStore";
 import { colors, MIN_TAP_TARGET, radius, spacing, typography } from "@/theme";
@@ -177,7 +178,17 @@ function followUpRoute(subjectId: SubjectId, activityType: FollowUpActivityType)
 
 // ─── Lesson screen ───────────────────────────────────────────────────────────
 
-export default function LessonScreen() {
+export default function LessonScreenWrapper() {
+  console.log("[LessonScreen] Wrapper rendering");
+  return (
+    <ErrorBoundary>
+      <LessonScreen />
+    </ErrorBoundary>
+  );
+}
+
+function LessonScreen() {
+  console.log("[LessonScreen] Component rendering");
   const router = useRouter();
   const params = useLocalSearchParams<{ subject: string; level: string }>();
   const subjectId = (params.subject ?? "math") as SubjectId;
