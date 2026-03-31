@@ -1,9 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Slot, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import * as Font from "expo-font";
 
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { useAuthStore } from "@/store/authStore";
 import { useChildStore } from "@/store/childStore";
+import { buildFontAssets } from "@/design/tokens";
 
 // ⚠️  DEV ONLY — set to false to re-enable auth before shipping.
 // When true, all Firebase auth imports are skipped entirely so no auth
@@ -15,18 +18,38 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
+  const [fontsLoaded, setFontsLoaded] = useState(false);
 
   const { user, isLoading, setUser, setParent, setLoading, clear: clearAuth } = useAuthStore();
   const { children, setChildren, clear: clearChildren } = useChildStore();
+
+  // -------------------------------------------------------------------------
+  // Load fonts before anything renders
+  // -------------------------------------------------------------------------
+  useEffect(() => {
+    const loadFonts = async () => {
+      try {
+        const assets = buildFontAssets();
+        if (Object.keys(assets).length > 0) {
+          await Font.loadAsync(assets);
+        }
+      } catch (err) {
+        console.warn("Font loading failed, using system fonts:", err);
+      }
+      setFontsLoaded(true);
+    };
+    loadFonts();
+  }, []);
 
   // -------------------------------------------------------------------------
   // Dev bypass — skip Firebase entirely, go straight to child home screen
   // -------------------------------------------------------------------------
   useEffect(() => {
     if (!SKIP_AUTH_FOR_DEV) return;
+    if (!fontsLoaded) return; // wait for fonts
     SplashScreen.hideAsync();
     if (segments[0] !== "(child)") router.replace("/(child)/");
-  }, [segments]);
+  }, [segments, fontsLoaded]);
 
   // -------------------------------------------------------------------------
   // Firebase auth listener — only runs when auth is enabled
@@ -61,11 +84,11 @@ export default function RootLayout() {
       }
 
       setLoading(false);
-      SplashScreen.hideAsync();
+      if (fontsLoaded) SplashScreen.hideAsync();
     });
 
     return unsubscribe;
-  }, []);
+  }, [fontsLoaded]);
 
   // -------------------------------------------------------------------------
   // Routing guard — only runs when auth is enabled
@@ -85,5 +108,12 @@ export default function RootLayout() {
     }
   }, [user, isLoading, children, segments]);
 
-  return <Slot />;
+  // Always render Slot — Expo Router requires the navigation container to be mounted.
+  // Splash screen stays visible until fontsLoaded flips to true above.
+  // ErrorBoundary catches any render error in the entire app tree.
+  return (
+    <ErrorBoundary>
+      <Slot />
+    </ErrorBoundary>
+  );
 }

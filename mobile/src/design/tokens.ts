@@ -259,70 +259,32 @@ export function buildFontAssets(): Record<string, any> {
   return fonts;
 }
 
+/**
+ * Typography tokens.
+ *
+ * fontFamily is NOT set here — it would crash the app if fonts haven't
+ * loaded yet. Components that want custom fonts should apply fontFamily
+ * explicitly after confirming fonts are loaded:
+ *
+ *   const fontsLoaded = useFontsLoaded();
+ *   const style = fontsLoaded
+ *     ? { ...typography.heading, fontFamily: fontFamilies.display }
+ *     : typography.heading;
+ */
 export const typography = {
-  // Child-facing
-  displayLarge: {
-    fontFamily: fontFamilies.display,
-    fontSize: 48,
-    fontWeight: "800" as const,
-    lineHeight: 58,
-  },
-  displayMedium: {
-    fontFamily: fontFamilies.display,
-    fontSize: 36,
-    fontWeight: "800" as const,
-    lineHeight: 44,
-  },
-  heading: {
-    fontFamily: fontFamilies.display,
-    fontSize: 28,
-    fontWeight: "700" as const,
-    lineHeight: 36,
-  },
-  body: {
-    fontFamily: fontFamilies.body,
-    fontSize: 22,
-    fontWeight: "500" as const,
-    lineHeight: 30,
-  },
-  caption: {
-    fontFamily: fontFamilies.body,
-    fontSize: 16,
-    fontWeight: "400" as const,
-    lineHeight: 22,
-  },
-  speech: {
-    fontFamily: fontFamilies.handwritten,
-    fontSize: 22,
-    fontWeight: "400" as const,
-    lineHeight: 30,
-  },
-  score: {
-    fontFamily: fontFamilies.mono,
-    fontSize: 28,
-    fontWeight: "700" as const,
-    lineHeight: 36,
-  },
+  // Child-facing — must be readable at arm's length on a tablet
+  displayLarge: { fontSize: 48, fontWeight: "800" as const, lineHeight: 58 },
+  displayMedium: { fontSize: 36, fontWeight: "800" as const, lineHeight: 44 },
+  heading: { fontSize: 28, fontWeight: "700" as const, lineHeight: 36 },
+  body: { fontSize: 22, fontWeight: "500" as const, lineHeight: 30 },
+  caption: { fontSize: 16, fontWeight: "400" as const, lineHeight: 22 },
+  speech: { fontSize: 22, fontWeight: "400" as const, lineHeight: 30 },
+  score: { fontSize: 28, fontWeight: "700" as const, lineHeight: 36 },
 
-  // Parent-facing
-  parentHeading: {
-    fontFamily: fontFamilies.bodyBold,
-    fontSize: 20,
-    fontWeight: "600" as const,
-    lineHeight: 28,
-  },
-  parentBody: {
-    fontFamily: fontFamilies.body,
-    fontSize: 16,
-    fontWeight: "400" as const,
-    lineHeight: 24,
-  },
-  parentCaption: {
-    fontFamily: fontFamilies.body,
-    fontSize: 13,
-    fontWeight: "400" as const,
-    lineHeight: 18,
-  },
+  // Parent-facing — standard sizes
+  parentHeading: { fontSize: 20, fontWeight: "600" as const, lineHeight: 28 },
+  parentBody: { fontSize: 16, fontWeight: "400" as const, lineHeight: 24 },
+  parentCaption: { fontSize: 13, fontWeight: "400" as const, lineHeight: 18 },
 } as const;
 
 // ─── Spacing (4pt base grid) ────────────────────────────────────────────────
