@@ -261,7 +261,10 @@ export default function WorldMapScreen() {
 
   const handleZonePress = useCallback((subjectId: SubjectId) => {
     console.log("[WorldMap] Zone tapped:", subjectId);
-    router.push(`/(child)/game/${subjectId}` as any);
+    // DEBUG: navigate to static test screen to isolate if the crash is
+    // in routing vs in the game screen. Change back to game/${subjectId}
+    // once this works.
+    router.push("/(child)/test" as any);
   }, [router]);
 
   const handleParentPress = () => {
