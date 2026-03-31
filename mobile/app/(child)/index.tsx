@@ -259,21 +259,10 @@ export default function WorldMapScreen() {
     return <BackendDown isChecking={isChecking} onRetry={retry} />;
   }
 
-  const handleZonePress = useCallback(async (subjectId: SubjectId) => {
+  const handleZonePress = useCallback((subjectId: SubjectId) => {
     console.log("[WorldMap] Zone tapped:", subjectId);
-    try {
-      const zone = zones.find((z) => z.subjectId === subjectId);
-      const level = zone?.level ?? 1;
-
-      // Feed session tracking — drives parent reports and streak recording
-      recordZoneVisit(subjectId, `${subjectId}.level_${level}`);
-
-      console.log("[WorldMap] Navigating to game for:", subjectId);
-      router.push(`/(child)/game/${subjectId}` as any);
-    } catch (err) {
-      console.error("[WorldMap] Zone navigation failed:", err);
-    }
-  }, [zones, recordZoneVisit, router]);
+    router.push(`/(child)/game/${subjectId}` as any);
+  }, [router]);
 
   const handleParentPress = () => {
     router.push("/(parent)/dashboard");
