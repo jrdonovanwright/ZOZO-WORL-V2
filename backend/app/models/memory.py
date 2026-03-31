@@ -55,8 +55,8 @@ class ProgressionState(BaseModel):
     zones_completed: list[str] = []
     total_skills_mastered: int = 0
     total_sessions_completed: int = 0
-    current_streak: int = 0
-    longest_streak: int = 0
+    # Streak data lives in children/{child_id}/streaks/current — not here.
+    # Use GET /api/v1/streaks/{child_id} as the single source of truth.
     last_active_date: Optional[str] = None
     overall_mastery_percent: float = 0.0
     grade_level: str = "Kindergarten"

@@ -14,24 +14,23 @@ import { colors } from "@/theme";
 import { useSessionTracker } from "@/hooks/useSessionTracker";
 import { useSessionHeartbeat } from "@/hooks/useSessionHeartbeat";
 
-function SessionTrackerMount() {
-  useSessionTracker();
-  useSessionHeartbeat();
-  return null;
-}
+// Hooks mounted via the layout component itself — no wrapper needed.
+// This avoids Fragment/navigator nesting issues in Expo Router.
 
 export default function ChildLayout() {
+  // These hooks are safe to call here — they only set up intervals and listeners,
+  // they don't render anything or affect the navigator.
+  useSessionTracker();
+  useSessionHeartbeat();
+
   return (
-    <>
-      <SessionTrackerMount />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.cream },
-          animation: "fade",
-          gestureEnabled: false, // children shouldn't be able to swipe back
-        }}
-      />
-    </>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: colors.cream },
+        animation: "fade",
+        gestureEnabled: false,
+      }}
+    />
   );
 }

@@ -46,6 +46,7 @@ import {
   type GameQuestion,
   type ResponseRecord,
 } from "@/services/api/game";
+import { useSessionStore } from "@/store/sessionStore";
 
 export type GameStatus =
   | "loading"
@@ -135,8 +136,29 @@ export function useGameSession({
     }
   };
 
+  /** Max time to wait for TTS audio before falling back to text-only. */
+  const TTS_TIMEOUT_MS = 10_000;
+
   const playUrl = (url: string, onFinish: () => void): void => {
     stopAudio().then(async () => {
+      let finished = false;
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        clearTimeout(timeout);
+        if (isMountedRef.current) onFinish();
+      };
+
+      // Safety timeout — if TTS hangs or takes >10s, skip to text-only
+      const timeout = setTimeout(() => {
+        if (!finished) {
+          soundRef.current?.stopAsync().catch(() => {});
+          soundRef.current?.unloadAsync().catch(() => {});
+          soundRef.current = null;
+          finish();
+        }
+      }, TTS_TIMEOUT_MS);
+
       try {
         const { sound } = await Audio.Sound.createAsync(
           { uri: url },
@@ -147,11 +169,11 @@ export function useGameSession({
           if (s.isLoaded && s.didJustFinish) {
             sound.unloadAsync().catch(() => {});
             soundRef.current = null;
-            if (isMountedRef.current) onFinish();
+            finish();
           }
         });
       } catch {
-        if (isMountedRef.current) onFinish();
+        finish();
       }
     });
   };
@@ -249,10 +271,19 @@ export function useGameSession({
       if (isCorrect) setSessionCorrect(nextCorrect);
       setStatus(isCorrect ? "correct" : "wrong");
 
+      // ── Feed session store (drives parent reports) ─────────────────────
+      const selectedChoice = question.choices.find((c) => c.id === choiceId);
+      const correctChoice  = question.choices.find((c) => c.id === question.correct_id);
+      useSessionStore.getState().recordAnswer({
+        subjectId,
+        questionText: question.prompt,
+        selectedAnswer: selectedChoice?.text ?? choiceId,
+        correctAnswer: correctChoice?.text ?? question.correct_id,
+        isCorrect,
+      });
+
       // ── Track response for the AI advisor ──────────────────────────────
       if (question.scored) {
-        const selectedChoice = question.choices.find((c) => c.id === choiceId);
-        const correctChoice  = question.choices.find((c) => c.id === question.correct_id);
         responseHistoryRef.current.push({
           question_text: question.prompt,
           selected_text: selectedChoice?.text ?? choiceId,

@@ -15,7 +15,7 @@
  *   3. Streak fetched + commentary TTS played (non-blocking)
  *   4. Weekly challenge fetched / auto-generated (non-blocking)
  */
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useRouter } from "expo-router";
 import {
   ActivityIndicator,
@@ -40,11 +40,15 @@ import { ZoneCard, type ZoneMeta } from "@/components/world/ZoneCard";
 import { StreakPlant } from "@/components/streak/StreakPlant";
 import { ChallengeCard } from "@/components/challenge/ChallengeCard";
 import { ResumePrompt } from "@/components/session/ResumePrompt";
+import { BackendDown } from "@/components/ui/BackendDown";
 import { useWorldMap, WORLD_ZONE_IDS } from "@/hooks/useWorldMap";
 import { useStreak } from "@/hooks/useStreak";
 import { useWeeklyChallenge } from "@/hooks/useWeeklyChallenge";
 import { useSessionResume } from "@/hooks/useSessionResume";
+import { useBackendHealth } from "@/hooks/useBackendHealth";
 import { useChildStore } from "@/store/childStore";
+import { useSessionStore } from "@/store/sessionStore";
+import { audioManager } from "@/services/audio/AudioManager";
 import { hasSeenLesson } from "@/utils/lessonSeen";
 import { colors, spacing, typography, MIN_TAP_TARGET, radius } from "@/theme";
 import type { SubjectId } from "../../../shared/types";
@@ -212,26 +216,55 @@ function GreetingLoading() {
 export default function WorldMapScreen() {
   const router = useRouter();
   const activeChild = useChildStore((s) => s.activeChild);
+  const { isDown, isChecking, retry } = useBackendHealth();
 
   const childId   = activeChild?.id   ?? "dev-child";
   const childName = activeChild?.name ?? "friend";
   const childAge  = activeChild?.age  ?? 5;
 
-  const { zones, greeting, progressLoaded, greetingLoaded, replayGreeting } =
-    useWorldMap(childId, childName, childAge);
+  const { zones, progressLoaded, setRecommendedZone } = useWorldMap(childId);
 
   const { streak } = useStreak({ childId, childName });
 
   const { challenge, completedCount, totalSteps, isCompleted: challengeCompleted } =
     useWeeklyChallenge({ childId, childName, childAge });
 
+  // Session context provides the greeting, recommendation, and resume state.
+  // This is the single greeting system — useWorldMap no longer fetches its own.
   const { resumeCase, context, activeSession, keepGoing, startFresh } = useSessionResume();
 
   const showResume = resumeCase === "resume" || resumeCase === "resume-light";
+  const greetingLoaded = !!context;
+  const greetingText = context?.zoey_opening_script ?? null;
+
+  // Mark the recommended zone once session context resolves
+  useEffect(() => {
+    if (context?.recommended_zone) {
+      setRecommendedZone(context.recommended_zone);
+    }
+  }, [context?.recommended_zone, setRecommendedZone]);
+
+  // Replay greeting TTS via the session context URL
+  const replayGreeting = useCallback(() => {
+    if (context?.tts_url) {
+      audioManager.playVoice(context.tts_url).catch(() => {});
+    }
+  }, [context?.tts_url]);
+
+  // Show friendly offline screen if backend is unreachable
+  if (isDown) {
+    return <BackendDown isChecking={isChecking} onRetry={retry} />;
+  }
+
+  const recordZoneVisit = useSessionStore((s) => s.recordZoneVisit);
 
   const handleZonePress = async (subjectId: SubjectId) => {
     const zone = zones.find((z) => z.subjectId === subjectId);
     const level = zone?.level ?? 1;
+
+    // Feed session tracking — drives parent reports and streak recording
+    recordZoneVisit(subjectId, `${subjectId}.level_${level}`);
+
     const seen = await hasSeenLesson(childId, subjectId, level);
     if (seen) {
       router.push(`/(child)/game/${subjectId}`);
@@ -279,9 +312,9 @@ export default function WorldMapScreen() {
           <ZoeyAvatar size={110} mood={zoeyMood} talking={!greetingLoaded} />
 
           <View style={styles.bubbleWrapper}>
-            {greetingLoaded && greeting ? (
+            {greetingLoaded && greetingText ? (
               <SpeechBubble
-                text={greeting.greeting}
+                text={greetingText}
                 visible={greetingLoaded}
                 onReplay={replayGreeting}
               />

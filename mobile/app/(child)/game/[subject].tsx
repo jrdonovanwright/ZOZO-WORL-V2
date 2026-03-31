@@ -29,6 +29,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ZoeyAvatar } from "@/components/zoey/ZoeyAvatar";
+import { ZoeyLoading } from "@/components/ui/ZoeyLoading";
 import { ChoiceButton, type ChoiceState } from "@/components/game/ChoiceButton";
 import { FeedbackOverlay } from "@/components/game/FeedbackOverlay";
 import { SessionProgress } from "@/components/game/SessionProgress";
@@ -179,7 +180,9 @@ export default function GameScreen() {
         />
 
         <View style={styles.promptBubble}>
-          {status === "loading" ? (
+          {status === "loading" && !question ? (
+            <ZoeyLoading size="small" message="Zoey is thinking of a question..." />
+          ) : status === "loading" ? (
             <ActivityIndicator color={colors.charcoal} />
           ) : (
             <Text style={styles.promptText}>

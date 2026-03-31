@@ -42,13 +42,17 @@ import type { SubjectId } from "../../../shared/types";
 
 // Static openers so the child sees Zoey say something the instant the screen loads.
 // These are warm, curiosity-sparking — no quiz pressure, no "let's begin a lesson".
-const SUBJECT_OPENERS: Record<SubjectId, string> = {
+const SUBJECT_OPENERS: Record<string, string> = {
   reading: "Ooh, I love stories! Do you have a favorite book? Tell me about it!",
   math: "Math is like a puzzle game! What numbers are you thinking about today?",
-  culture: "I know SO many cool stories about amazing people who look like us! Want to hear one?",
+  social_studies: "I know SO many cool stories about amazing people who look like us! Want to hear one?",
   science: "The world is so interesting! I was wondering why the sky is blue — do you know?",
-  free_talk: "Hi! I'm so happy you're here. What do you want to talk about?",
+  sel: "Feelings are so important! How are you feeling right now? I want to know!",
+  arts: "I love making things! Do you like drawing or painting?",
+  health: "Let's learn about taking care of our amazing bodies! Ready?",
 };
+
+const DEFAULT_OPENER = "Hi! I'm so happy you're here. What do you want to talk about?";
 
 // Maps conversation status to the mood Zoey's avatar should display
 function statusToMood(status: string): "happy" | "excited" | "thinking" | "proud" | "concerned" {
@@ -89,7 +93,7 @@ export default function ConversationScreen() {
   const { isRecording, hasPermission, start, stop } = useAudioRecorder();
 
   // The displayed Zoey message — starts as the static opener
-  const [displayText, setDisplayText] = useState(SUBJECT_OPENERS[subjectId]);
+  const [displayText, setDisplayText] = useState(SUBJECT_OPENERS[subjectId] ?? DEFAULT_OPENER);
 
   // Update display text whenever Zoey responds
   useEffect(() => {

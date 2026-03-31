@@ -24,6 +24,7 @@ import {
   resetProgress,
   type ProgressionSummaryResponse,
 } from "@/services/api/progression";
+import { fetchStreak, type StreakResponse } from "@/services/api/streaks";
 import { colors, radius, spacing, typography } from "@/theme";
 
 const ZONE_LABELS: Record<string, { name: string; emoji: string }> = {
@@ -85,12 +86,17 @@ export default function JourneyScreen() {
   const childAge = activeChild?.age ?? 5;
 
   const [summary, setSummary] = useState<ProgressionSummaryResponse | null>(null);
+  const [streakData, setStreakData] = useState<StreakResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     try {
-      const data = await fetchProgressionSummary(childId, childName, childAge);
+      const [data, streak] = await Promise.all([
+        fetchProgressionSummary(childId, childName, childAge),
+        fetchStreak(childId).catch(() => null),
+      ]);
       setSummary(data);
+      setStreakData(streak);
     } catch {
       // silent
     }
@@ -156,7 +162,7 @@ export default function JourneyScreen() {
               <Text style={styles.statLabel}>Sessions</Text>
             </View>
             <View style={styles.stat}>
-              <Text style={styles.statNumber}>{prog.current_streak ?? 0}</Text>
+              <Text style={styles.statNumber}>{streakData?.current_streak ?? 0}</Text>
               <Text style={styles.statLabel}>Day streak</Text>
             </View>
           </View>
