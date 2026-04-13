@@ -1,7 +1,46 @@
 // Shared domain types — used by both mobile (TypeScript) and documented for backend (Python)
 // Keep these in sync with backend Pydantic models.
 
-export type SubjectId = "reading" | "math" | "culture" | "science";
+export type SubjectId =
+  | "reading"
+  | "math"
+  | "science"
+  | "social_studies"
+  | "sel"
+  | "arts"
+  | "health";
+
+// Game engine types
+export interface AnswerChoice {
+  id: string;
+  text: string;
+  emoji?: string;
+}
+
+export interface GameQuestion {
+  id: string;
+  subject: SubjectId;
+  level: number;
+  type: "multiple_choice";
+  prompt: string;
+  choices: AnswerChoice[];
+  correct_id: string;
+  zoey_correct: string;
+  zoey_wrong: string;
+  scored: boolean;
+  tts_prompt_url: string | null;
+  tts_correct_url: string | null;
+  tts_wrong_url: string | null;
+}
+
+export interface ChildProgress {
+  subject_id: SubjectId;
+  level: number;
+  questions_answered: number;
+  correct_count: number;
+  accuracy_rate: number;
+  last_played: string | null;
+}
 
 export interface ChildProfile {
   id: string;

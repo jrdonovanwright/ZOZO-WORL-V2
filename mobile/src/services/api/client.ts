@@ -6,10 +6,12 @@
  * request here will automatically carry the current Firebase ID token.
  */
 import axios from "axios";
-import Constants from "expo-constants";
+
+// EXPO_PUBLIC_* vars are inlined by Metro at bundle time — no Constants needed.
+const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
 export const apiClient = axios.create({
-  baseURL: Constants.expoConfig?.extra?.apiBaseUrl ?? "http://localhost:8000",
+  baseURL: BASE_URL,
   timeout: 30_000,
   headers: {
     "Content-Type": "application/json",

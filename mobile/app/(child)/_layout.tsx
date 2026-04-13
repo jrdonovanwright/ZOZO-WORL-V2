@@ -1,21 +1,20 @@
 /**
- * Child experience layout.
+ * Child experience layout — minimal stable version.
  *
- * No navigation chrome visible to the child — no header, no tab bar, no back
- * button. The full screen belongs to Zoey. Parent access is through a small
- * icon tucked into the home screen corner.
+ * Session tracking hooks removed temporarily to isolate navigation crash.
+ * They will be added back once zone navigation is confirmed working.
  */
 import { Stack } from "expo-router";
-import { colors } from "@/theme";
 
 export default function ChildLayout() {
+  console.log("[ChildLayout] Rendering");
   return (
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: colors.cream },
+        contentStyle: { backgroundColor: "#FFF8E7" },
         animation: "fade",
-        gestureEnabled: false, // children shouldn't be able to swipe back
+        gestureEnabled: false,
       }}
     />
   );

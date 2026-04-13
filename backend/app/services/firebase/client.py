@@ -39,6 +39,10 @@ def get_firebase_app() -> firebase_admin.App:
         # Treat as a file path
         cred = credentials.Certificate(sa)
 
-    app = firebase_admin.initialize_app(cred)
+    options = {}
+    if settings.firebase_storage_bucket:
+        options["storageBucket"] = settings.firebase_storage_bucket
+
+    app = firebase_admin.initialize_app(cred, options or None)
     logger.info("Firebase app initialized")
     return app
